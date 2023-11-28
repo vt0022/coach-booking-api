@@ -33,4 +33,9 @@ public class PassengerServiceImpl implements IPassengerService {
     public <S extends Passenger> S save(S entity) {
         return passengerRepository.save(entity);
     }
+
+    @Override
+    public List<Passenger> findByPhoneStartingWith(String phone) {
+        return passengerRepository.findByPhoneStartingWith(phone);
+    }
 }

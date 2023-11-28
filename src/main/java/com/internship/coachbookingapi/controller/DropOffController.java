@@ -9,15 +9,14 @@ import com.internship.coachbookingapi.service.IDestinationService;
 import com.internship.coachbookingapi.service.IDropOffService;
 import com.internship.coachbookingapi.service.IDropOffTypeService;
 import io.swagger.v3.oas.annotations.Operation;
-import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -55,39 +54,4 @@ public class DropOffController {
                 .build());
     }
 
-    @Operation(summary = "Tạo địa điểm trả khách")
-    @PostMapping
-    public ResponseEntity<?> createDropOff(@RequestParam UUID destinationId,
-                                           @RequestParam UUID dropOffTypeId) throws IOException {
-        FileInputStream file = new FileInputStream("./src/main/resources/Data.xlsx");
-        Workbook workbook = new XSSFWorkbook(file);
-        Sheet sheet = workbook.getSheetAt(6);
-
-        Destination destination = destinationService.findById(destinationId).orElseThrow(() -> new RuntimeException("Destination not found"));
-        DropOffType dropOffType = dropOffTypeService.findById(dropOffTypeId).orElseThrow(() -> new RuntimeException("Drop off type not found"));
-        DataFormatter formatter = new DataFormatter();
-        // Duyệt qua các hàng trong sheet
-        for (Row row : sheet) {
-            Cell locationCell = row.getCell(0);
-
-            if (locationCell != null) {
-                String location = formatter.formatCellValue(locationCell);
-
-                DropOff dropOff = new DropOff();
-                dropOff.setLocation(location);
-                dropOff.setDropOffType(dropOffType);
-                dropOff.setDestination(destination);
-                dropOffService.save(dropOff);
-            }
-        }
-
-        workbook.close();
-        file.close();
-
-        return ResponseEntity.ok(ResponseModel.builder()
-                .status(200)
-                .error(false)
-                .message("Create drop offs successfully")
-                .build());
-    }
 }

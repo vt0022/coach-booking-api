@@ -1,22 +1,22 @@
 package com.internship.coachbookingapi.controller;
 
-import com.internship.coachbookingapi.entity.*;
+import com.internship.coachbookingapi.entity.CoachType;
+import com.internship.coachbookingapi.entity.Departure;
+import com.internship.coachbookingapi.entity.Destination;
+import com.internship.coachbookingapi.entity.Line;
 import com.internship.coachbookingapi.model.LineModel;
 import com.internship.coachbookingapi.model.ResponseModel;
 import com.internship.coachbookingapi.service.*;
-import com.internship.coachbookingapi.util.PriceSetter;
 import io.swagger.v3.oas.annotations.Operation;
-import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.sql.Date;
-import java.sql.Time;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -79,52 +79,6 @@ public class LineController {
                 .error(false)
                 .message("Get all available lines for date " + departureDate.toString() + " successfully")
                 .data(lineModels)
-                .build());
-    }
-
-    @Operation(summary = "Thêm chuyến xe")
-    @PostMapping
-    public ResponseEntity<?> createLines() throws IOException {
-        FileInputStream file = new FileInputStream("./src/main/resources/Data.xlsx");
-        Workbook workbook = new XSSFWorkbook(file);
-        Sheet sheet = workbook.getSheetAt(0);
-
-        DataFormatter formatter = new DataFormatter();
-        // Duyệt qua các hàng trong sheet
-        for (Row row : sheet) {
-            Cell statusCell = row.getCell(1);
-            Cell timeCell = row.getCell(2);
-            Cell dateCell = row.getCell(3);
-            Cell departureCell = row.getCell(4);
-            Cell destinationCell = row.getCell(5);
-            Cell coachCell = row.getCell(6);
-
-            if (statusCell != null) {
-                Boolean status = Boolean.valueOf(formatter.formatCellValue(statusCell));
-                Time departureTime = Time.valueOf(formatter.formatCellValue(timeCell));
-                Date departureDate = Date.valueOf(formatter.formatCellValue(dateCell));
-                Departure departure = departureService.findById(UUID.fromString(formatter.formatCellValue(departureCell))).orElseThrow(() -> new RuntimeException("Could not find departure"));
-                Destination destination = destinationService.findById(UUID.fromString(formatter.formatCellValue(destinationCell))).orElseThrow(() -> new RuntimeException("Could not find destination"));
-                Coach coach = coachService.findById(UUID.fromString(formatter.formatCellValue(coachCell))).orElseThrow(() -> new RuntimeException("Could not find"));
-
-                Line line = new Line();
-                line.setStatus(status);
-                line.setDepartureTime(departureTime);
-                line.setDepartureDate(departureDate);
-                line.setDeparture(departure);
-                line.setDestination(destination);
-                line.setCoach(coach);
-                line.setPrice(new PriceSetter().getPrice(departure.getSlug(), destination.getSlug(), coach.getId()));
-                lineService.save(line);
-            }
-        }
-        workbook.close();
-        file.close();
-
-        return ResponseEntity.ok(ResponseModel.builder()
-                .status(200)
-                .error(false)
-                .message("Create lines successfully")
                 .build());
     }
 }

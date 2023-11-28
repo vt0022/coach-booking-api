@@ -7,14 +7,13 @@ import com.internship.coachbookingapi.model.ResponseModel;
 import com.internship.coachbookingapi.service.IDepartureService;
 import com.internship.coachbookingapi.service.IDestinationService;
 import io.swagger.v3.oas.annotations.Operation;
-import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -76,41 +75,6 @@ public class DestinationController {
                 .status(200)
                 .message("Get all destinations from " + departure.getName() + " successfully")
                 .data(destinationModels)
-                .build());
-    }
-
-    @Operation(summary = "Tạo danh sách nơi đến ứng với nơi đi")
-    @PostMapping("/dep_des")
-    public ResponseEntity<?> createLine_Seats() throws IOException {
-        FileInputStream file = new FileInputStream("./src/main/resources/Data.xlsx");
-        Workbook workbook = new XSSFWorkbook(file);
-        Sheet sheet = workbook.getSheetAt(0);
-
-        DataFormatter formatter = new DataFormatter();
-        // Duyệt qua các hàng trong sheet
-        for (Row row : sheet) {
-            Cell depCell = row.getCell(0);
-            Cell desCell = row.getCell(1);
-
-            if (desCell != null) {
-                String departureSlug = formatter.formatCellValue(depCell);
-                String destinationSlug = formatter.formatCellValue(desCell);
-                Departure departure = departureService.findBySlug(departureSlug).orElseThrow(() -> new RuntimeException("Could not find departure"));
-                Destination destination = destinationService.findBySlug(destinationSlug).orElseThrow(() -> new RuntimeException("Could not find destination"));
-                departure.getDestinations().add(destination);
-                destination.getDepartures().add(departure);
-                departureService.save(departure);
-                destinationService.save(destination);
-            }
-        }
-
-        workbook.close();
-        file.close();
-
-        return ResponseEntity.ok(ResponseModel.builder()
-                .status(200)
-                .error(false)
-                .message("Create seats for line successfully")
                 .build());
     }
 }

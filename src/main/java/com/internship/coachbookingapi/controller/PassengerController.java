@@ -6,10 +6,10 @@ import com.internship.coachbookingapi.model.ResponseModel;
 import com.internship.coachbookingapi.service.IPassengerService;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/passengers")
@@ -32,5 +32,20 @@ public class PassengerController {
                 .error(false)
                 .message("Create passenger successfully")
                 .build());
+    }
+ 
+    @GetMapping("/phone")
+    public ResponseEntity<?> findPassengers(@RequestParam String phone) {
+        List<Passenger> passengers = passengerService.findByPhoneStartingWith(phone);
+        List<PassengerModel> passengerModels = passengers.stream()
+                .map(passenger -> modelMapper.map(passenger, PassengerModel.class))
+                .collect(Collectors.toList());
+        return ResponseEntity.ok((ResponseModel
+                .builder()
+                .status(200)
+                .error(true)
+                .message("Find passengers successfully")
+                .data(passengerModels)
+                .build()));
     }
 }

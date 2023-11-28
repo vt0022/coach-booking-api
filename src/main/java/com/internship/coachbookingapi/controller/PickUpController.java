@@ -1,6 +1,8 @@
 package com.internship.coachbookingapi.controller;
 
-import com.internship.coachbookingapi.entity.*;
+import com.internship.coachbookingapi.entity.Departure;
+import com.internship.coachbookingapi.entity.PickUp;
+import com.internship.coachbookingapi.entity.PickUpType;
 import com.internship.coachbookingapi.model.PickUpModel;
 import com.internship.coachbookingapi.model.ResponseModel;
 import com.internship.coachbookingapi.service.IDepartureService;
@@ -10,7 +12,10 @@ import com.internship.coachbookingapi.service.IPickUpTypeService;
 import io.swagger.v3.oas.annotations.Operation;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.UUID;
@@ -49,34 +54,4 @@ public class PickUpController {
                 .data(pickUpModels)
                 .build());
     }
-
-    @Operation(summary = "Tạo danh sách nơi đón theo nơi đi")
-    @PostMapping()
-    public ResponseEntity<?> createPickUp(@RequestParam UUID departureId) {
-        Departure departure = departureService.findById(departureId).orElseThrow(() -> new RuntimeException("Departure not found"));
-        Destination destination = destinationService.findBySlug(departure.getSlug()).orElseThrow(() -> new RuntimeException("Destination not found"));
-        for (DropOff dropOff : destination.getDropOffs()) {
-            PickUp pickUp = new PickUp();
-            if (dropOff.getDropOffType().getName().equals("Xuống xe tại trạm")) {
-                PickUpType pickUpType = pickUpTypeService.findById(UUID.fromString("c0a80203-8b83-1195-818b-84e8c50c0402")).orElseThrow(() -> new RuntimeException("Pick up type not found"));
-                pickUp.setLocation(dropOff.getLocation());
-                pickUp.setPickUpType(pickUpType);
-                pickUp.setDeparture(departure);
-            } else {
-                PickUpType pickUpType = pickUpTypeService.findById(UUID.fromString("c0a80203-8b83-1195-818b-84e8fb680403")).orElseThrow(() -> new RuntimeException("Pick up type not found"));
-                pickUp.setLocation(dropOff.getLocation());
-                pickUp.setPickUpType(pickUpType);
-                pickUp.setDeparture(departure);
-            }
-            pickUpService.save(pickUp);
-        }
-        return ResponseEntity.ok(ResponseModel
-                .builder()
-                .status(200)
-                .error(false)
-                .message("Create pickup successfully")
-                .build());
-    }
-
-
 }

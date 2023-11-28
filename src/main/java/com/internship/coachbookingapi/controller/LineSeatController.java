@@ -1,23 +1,19 @@
 package com.internship.coachbookingapi.controller;
 
 import com.internship.coachbookingapi.entity.Line;
-import com.internship.coachbookingapi.entity.LineSeat;
-import com.internship.coachbookingapi.entity.LineSeatKey;
-import com.internship.coachbookingapi.entity.Seat;
 import com.internship.coachbookingapi.model.LineSeatModel;
 import com.internship.coachbookingapi.model.ResponseModel;
 import com.internship.coachbookingapi.service.ILineSeatService;
 import com.internship.coachbookingapi.service.ILineService;
 import io.swagger.v3.oas.annotations.Operation;
-import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -44,8 +40,6 @@ public class LineSeatController {
                 .stream()
                 .map(lineSeat -> {
                     LineSeatModel lineSeatModel = modelMapper.map(lineSeat, LineSeatModel.class);
-//                    lineSeatModel.setSeat_id(lineSeat.getCompositeKey().getSeat_id());
-//                    lineSeatModel.setLine_id(lineSeat.getCompositeKey().getLine_id());
                     return lineSeatModel;
                 })
                 .collect(Collectors.toList());
@@ -55,47 +49,6 @@ public class LineSeatController {
                 .error(false)
                 .message("Get seats by line successfully")
                 .data(lineSeatModels)
-                .build());
-    }
-
-    @Operation(summary = "Tạo danh sách ghế_chuyến")
-    @PostMapping("/lines")
-    public ResponseEntity<?> createLine_Seats() throws IOException {
-        FileInputStream file = new FileInputStream("./src/main/resources/Data.xlsx");
-        Workbook workbook = new XSSFWorkbook(file);
-        Sheet sheet = workbook.getSheetAt(0);
-
-        DataFormatter formatter = new DataFormatter();
-        // Duyệt qua các hàng trong sheet
-        for (Row row : sheet) {
-            Cell lineCell = row.getCell(0);
-//            Cell availableCell = row.getCell(2);
-
-            if (lineCell != null) {
-                LineSeat lineSeat = new LineSeat();
-                UUID lineId = UUID.fromString(formatter.formatCellValue(lineCell));
-//                boolean isAvailable = Boolean.parseBoolean(formatter.formatCellValue(availableCell));
-                Line line = lineService.findById(lineId).orElseThrow(() -> new RuntimeException("Could not find line"));
-                List<Seat> seats = line.getCoach().getSeats();
-                // mỗi line -> mỗi coach -> mỗi type, mỗi coach -> mỗi seat
-                for (Seat seat : seats) {
-                    LineSeatKey lineSeatKey = new LineSeatKey(lineId, seat.getId());
-                    lineSeat.setLineSeatKey(lineSeatKey);
-                    lineSeat.setSeat(seat);
-                    lineSeat.setLine(line);
-                    lineSeat.setTicket(null);
-                    lineSeat.set_available(true);
-                    lineSeatService.save(lineSeat);
-                }
-            }
-        }
-        workbook.close();
-        file.close();
-
-        return ResponseEntity.ok(ResponseModel.builder()
-                .status(200)
-                .error(false)
-                .message("Create seats for line successfully")
                 .build());
     }
 }

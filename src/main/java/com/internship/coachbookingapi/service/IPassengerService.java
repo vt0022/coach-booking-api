@@ -12,4 +12,6 @@ public interface IPassengerService {
     Optional<Passenger> findById(UUID uuid);
 
     <S extends Passenger> S save(S entity);
+
+    List<Passenger> findByPhoneStartingWith(String phone);
 }
